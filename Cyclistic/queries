@@ -1,0 +1,496 @@
+/*create table c202207 as (select * from c202108);
+truncate c202207;
+delete from c202207;
+COPY totalcyclistic(ride_id,rideable_type,started_at,ended_at,start_station_name,start_station_id,end_station_name,end_station_id,start_lat,start_lng,end_lat,end_lng,member_casual)
+FROM '/home/m710/Escritorio/Analisis de Datos de Google/Curso8_Completa un Caso Práctico/Cyclistic/202108_202207.csv'
+DELIMITER ','
+CSV HEADER;*/
+--select * from totalcyclistic limit 10;
+--select count(*) from c202207;
+--select count(*) from c202109 as nueve full join c202108 as ocho on ocho.ride_id = nueve.ride_id;
+
+-- RIDE TIME
+
+/*with cte as (select rideable_type, extract(isodow from started_at) as num_day, 
+			 extract(MONTH from started_at) as _month, ended_at, started_at
+			from all_cyclistic where member_casual = 'casual')
+
+select rideable_type, case when num_day = 1 then 'monday'
+			when num_day = 2 then 'tuesday'
+			when num_day = 3 then 'wednesday'
+			when num_day = 4 then 'thursday'
+			when num_day = 5 then 'friday'
+			when num_day = 6 then 'saturday'
+			else 'sunday' end as day, 
+		case when _month = 1 then 'january'
+			when _month = 2 then 'february'
+			when _month = 3 then 'march'
+			when _month = 4 then 'april'
+			when _month = 5 then 'may'
+			when _month = 6 then 'june'
+			when _month = 7 then 'july'
+			when _month = 8 then 'august'
+			when _month = 9 then 'september'
+			when _month = 10 then 'october'
+			when _month = 11 then 'november'
+			else 'december' end as month, ended_at - started_at as ride_time
+from cte;*/
+
+-- RIDE LENGTH 
+
+with cte as (select rideable_type, extract(isodow from started_at) as num_day, 
+			 extract(MONTH from started_at) as _month, end_lat, start_lat, end_lng, start_lng
+			from all_cyclistic where member_casual = 'casual')
+
+select rideable_type, case when num_day = 1 then 'monday'
+			when num_day = 2 then 'tuesday'
+			when num_day = 3 then 'wednesday'
+			when num_day = 4 then 'thursday'
+			when num_day = 5 then 'friday'
+			when num_day = 6 then 'saturday'
+			else 'sunday' end as day, 
+		case when _month = 1 then 'january'
+			when _month = 2 then 'february'
+			when _month = 3 then 'march'
+			when _month = 4 then 'april'
+			when _month = 5 then 'may'
+			when _month = 6 then 'june'
+			when _month = 7 then 'july'
+			when _month = 8 then 'august'
+			when _month = 9 then 'september'
+			when _month = 10 then 'october'
+			when _month = 11 then 'november'
+			else 'december' end as month, 
+			round(sqrt(power(start_lng - start_lat,2) + power(end_lng - end_lat,2)) * 0.00381681057,2) as ride_length_km
+from cte;
+
+
+-- AVERAGE RIDE LENGTH *********************************++**********************************
+/*select avg(distance) as average_distance  
+from (select sqrt(power(end_lat - start_lat,2) + power(end_lng - start_lng,2)) as distance
+	  from c202108 
+	  where member_casual =  'member'
+	  union  
+	  select sqrt(power(end_lat - start_lat,2) + power(end_lng - start_lng,2)) as distance
+	  from c202109 
+	  where member_casual =  'member'
+	  union 
+	  select sqrt(power(end_lat - start_lat,2) + power(end_lng - start_lng,2)) as distance
+	  from c202110 
+	  where member_casual =  'member'
+	  union
+	  select sqrt(power(end_lat - start_lat,2) + power(end_lng - start_lng,2)) as distance
+	  from c202111
+	  where member_casual =  'member'
+	  union
+	  select sqrt(power(end_lat - start_lat,2) + power(end_lng - start_lng,2)) as distance
+	  from c202112
+	  where member_casual =  'member'
+	  union
+	  select sqrt(power(end_lat - start_lat,2) + power(end_lng - start_lng,2)) as distance
+	  from c202201
+	  where member_casual =  'member'
+	  union
+	  select sqrt(power(end_lat - start_lat,2) + power(end_lng - start_lng,2)) as distance
+	  from c202202
+	  where member_casual =  'member'
+	  union
+	  select sqrt(power(end_lat - start_lat,2) + power(end_lng - start_lng,2)) as distance
+	  from c202203
+	  where member_casual =  'member'
+	  union
+	  select sqrt(power(end_lat - start_lat,2) + power(end_lng - start_lng,2)) as distance
+	  from c202204
+	  where member_casual =  'member'
+	  union
+	  select sqrt(power(end_lat - start_lat,2) + power(end_lng - start_lng,2)) as distance
+	  from c202205
+	  where member_casual =  'member'
+	  union
+	  select sqrt(power(end_lat - start_lat,2) + power(end_lng - start_lng,2)) as distance
+	  from c202206
+	  where member_casual =  'member'
+	  union
+	  select sqrt(power(end_lat - start_lat,2) + power(end_lng - start_lng,2)) as distance
+	  from c202207
+	  where member_casual =  'member') as fj;*/
+
+
+-- AVG RIDE LENGTH BY MEMBER_CASUAL AND RIDEABLE_TYPE PER WEEKDAY
+
+/*with cte as (select extract(isodow from started_at) as num_day, 
+			 avg(sqrt(power(end_lat - start_lat,2) + power(end_lng - start_lng,2))) 
+			 as avg_ride_length
+from (select started_at, end_lat, start_lat, end_lng, start_lng from c202108 where member_casual = 'member' and rideable_type = 'docked_bike' union all
+	  select started_at, end_lat, start_lat, end_lng, start_lng from c202109 where member_casual = 'member' and rideable_type = 'docked_bike' union all
+	  select started_at, end_lat, start_lat, end_lng, start_lng from c202110 where member_casual = 'member' and rideable_type = 'docked_bike' union all
+	  select started_at, end_lat, start_lat, end_lng, start_lng from c202111 where member_casual = 'member' and rideable_type = 'docked_bike' union all
+	  select started_at, end_lat, start_lat, end_lng, start_lng from c202112 where member_casual = 'member' and rideable_type = 'docked_bike' union all
+	  select started_at, end_lat, start_lat, end_lng, start_lng from c202201 where member_casual = 'member' and rideable_type = 'docked_bike' union all
+	  select started_at, end_lat, start_lat, end_lng, start_lng from c202202 where member_casual = 'member' and rideable_type = 'docked_bike' union all
+	  select started_at, end_lat, start_lat, end_lng, start_lng from c202203 where member_casual = 'member' and rideable_type = 'docked_bike' union all
+	  select started_at, end_lat, start_lat, end_lng, start_lng from c202204 where member_casual = 'member' and rideable_type = 'docked_bike' union all
+	  select started_at, end_lat, start_lat, end_lng, start_lng from c202205 where member_casual = 'member' and rideable_type = 'docked_bike' union all
+	  select started_at, end_lat, start_lat, end_lng, start_lng from c202206 where member_casual = 'member' and rideable_type = 'docked_bike' union all
+	  select started_at, end_lat, start_lat, end_lng, start_lng from c202207 where member_casual = 'member' and rideable_type = 'docked_bike') as fee
+group by num_day)
+
+select case when num_day = 1 then 'monday'
+			when num_day = 2 then 'tuesday'
+			when num_day = 3 then 'wednesday'
+			when num_day = 4 then 'thursday'
+			when num_day = 5 then 'friday'
+			when num_day = 6 then 'saturday'
+			else 'sunday' end as fai, round(avg_ride_length * 111,2)
+from cte;*/
+
+/*with cte as (select extract(isodow from started_at) as num_day, 
+			 avg(sqrt(power(end_lat - start_lat,2) + power(end_lng - start_lng,2))) as avg_ride_length 
+			 from (select started_at, end_lat, start_lat, end_lng, start_lng 
+				   from all_cyclistic 
+				   where member_casual = 'member'and rideable_type = 'electric_bike' 
+				   and end_lat != end_lng) as foo
+			 group by num_day)
+
+select case when num_day = 1 then 'monday'
+			when num_day = 2 then 'tuesday'
+			when num_day = 3 then 'wednesday'
+			when num_day = 4 then 'thursday'
+			when num_day = 5 then 'friday'
+			when num_day = 6 then 'saturday'
+			else 'sunday' end as fai, round(avg_ride_length * 111,2)
+from cte;*/
+
+-- AVERAGE TRIP TIME *********************************++**********************************
+
+/*
+select avg(trip_time) as avg_trip_time 
+from (select ended_at - started_at as trip_time from c202108 where member_casual = 'casual' union all
+	  select ended_at - started_at as trip_time from c202109 where member_casual = 'casual' union all
+	  select ended_at - started_at as trip_time from c202110 where member_casual = 'casual' union all
+	  select ended_at - started_at as trip_time from c202111 where member_casual = 'casual' union all
+	  select ended_at - started_at as trip_time from c202112 where member_casual = 'casual' union all
+	  select ended_at - started_at as trip_time from c202201 where member_casual = 'casual' union all
+	  select ended_at - started_at as trip_time from c202202 where member_casual = 'casual' union all
+	  select ended_at - started_at as trip_time from c202203 where member_casual = 'casual' union all
+	  select ended_at - started_at as trip_time from c202204 where member_casual = 'casual' union all
+	  select ended_at - started_at as trip_time from c202205 where member_casual = 'casual' union all
+	  select ended_at - started_at as trip_time from c202206 where member_casual = 'casual' union all
+	  select ended_at - started_at as trip_time from c202207 where member_casual = 'casual') as foo;
+*/
+
+-- AVG RIDE TIME BY WEEKDAY PER MEMBER_CASUAL AND RIDEABLE TYPE
+
+/*with cte as (select extract(isodow from started_at) as num_day, 
+			 avg(ended_at - started_at) as avg_ride_time
+			 from (select started_at, ended_at from c202108 where member_casual = 'casual' and rideable_type = 'docked_bike' union all
+	  			   select started_at, ended_at from c202109 where member_casual = 'casual' and rideable_type = 'docked_bike' union all
+	  			   select started_at, ended_at from c202110 where member_casual = 'casual' and rideable_type = 'docked_bike' union all
+	  			   select started_at, ended_at from c202111 where member_casual = 'casual' and rideable_type = 'docked_bike' union all
+	  			   select started_at, ended_at from c202112 where member_casual = 'casual' and rideable_type = 'docked_bike' union all
+	  			   select started_at, ended_at from c202201 where member_casual = 'casual' and rideable_type = 'docked_bike' union all
+	  			   select started_at, ended_at from c202202 where member_casual = 'casual' and rideable_type = 'docked_bike' union all
+	    		   select started_at, ended_at from c202203 where member_casual = 'casual' and rideable_type = 'docked_bike' union all
+	  			   select started_at, ended_at from c202204 where member_casual = 'casual' and rideable_type = 'docked_bike' union all
+	  			   select started_at, ended_at from c202205 where member_casual = 'casual' and rideable_type = 'docked_bike' union all
+	  			   select started_at, ended_at from c202206 where member_casual = 'casual' and rideable_type = 'docked_bike' union all
+	  			   select started_at, ended_at from c202207 where member_casual = 'casual' and rideable_type = 'docked_bike') as fee
+group by num_day)
+
+select case when num_day = 1 then 'monday'
+			when num_day = 2 then 'tuesday'
+			when num_day = 3 then 'wednesday'
+			when num_day = 4 then 'thursday'
+			when num_day = 5 then 'friday'
+			when num_day = 6 then 'saturday'
+			else 'sunday' end as fai, avg_ride_time
+from cte;*/
+
+
+
+-- EXPORT ALL RECORDS ****************************
+/*create table all_cyclistic as (select * from (select * from c202108 union all
+			  select * from c202109 union all
+			  select * from c202110 union all
+			  select * from c202111 union all
+			  select * from c202112 union all
+			  select * from c202201 union all
+			  select * from c202202 union all
+			  select * from c202203 union all
+			  select * from c202204 union all
+			  select * from c202205 union all
+			  select * from c202206 union all
+			  select * from c202207) as foo);*/
+			  
+
+-- START_STATION_NAME AND END_STATION_NAME  ****************************************************************************************
+
+/*select count(*) from all_cyclistic where start_station_name is null and member_casual = 'casual';*/
+
+/*select count(1) as qty from all_cyclistic 
+where member_casual = 'member' and end_station_name is null;*/
+
+
+-- NUMBER OF RIDES BY MONTH ******************************************************************************
+
+/*with cte as (select extract(MONTH from started_at) as _month, count (ride_id) as num_rides,
+			 avg(ended_at - started_at) as avg_ride_time,
+			 avg(sqrt(power(end_lat - start_lat,2) + power(end_lng - start_lng,2))) as avg_ride_length 
+			 from (select ride_id, ended_at, started_at, end_lat, start_lat, end_lng, start_lng 
+				   from all_cyclistic where member_casual = 'member'and rideable_type = 'electric_bike' 
+				   and end_lat != end_lng) as foo
+			 group by _month)
+
+select case when _month = 1 then 'january'
+			when _month = 2 then 'february'
+			when _month = 3 then 'march'
+			when _month = 4 then 'april'
+			when _month = 5 then 'may'
+			when _month = 6 then 'june'
+			when _month = 7 then 'july'
+			when _month = 8 then 'august'
+			when _month = 9 then 'september'
+			when _month = 10 then 'october'
+			when _month = 11 then 'november'
+			else 'december' end as fai, num_rides, round(avg_ride_length * 111,2) as average_length, avg_ride_time
+from cte;*/
+
+
+-- UNION ALL TABLES FOR EXPORTING TO CSV FILE *************************************************
+/*select * from c202108 
+union all
+select * from c202109 
+union all
+select * from c202110 
+union all
+select * from c202111 
+union all
+select * from c202112 
+union all
+select * from c202201 
+union all
+select * from c202202 
+union all
+select * from c202203 
+union all
+select * from c202204 
+union all
+select * from c202205 
+union all
+select * from c202206 
+union all
+select * from c202207*/
+
+
+-- GROUP BY RIDEABLE_TYPE AND MEMBER_CASUAL *************************************************
+/*select count(1)
+from (select ride_id
+	  from c202108 
+	  where member_casual = 'casual' and rideable_type = 'classic_bike'
+	 union all
+	 select ride_id
+	  from c202109 
+	  where member_casual = 'casual' and rideable_type = 'classic_bike'
+	 union all
+	 select ride_id
+	  from c202110 
+	  where member_casual = 'casual' and rideable_type = 'classic_bike'
+	 union all
+	 select ride_id
+	  from c202111 
+	  where member_casual = 'casual' and rideable_type = 'classic_bike'
+	 union all
+	 select ride_id
+	  from c202112 
+	  where member_casual = 'casual' and rideable_type = 'classic_bike'
+	 union all
+	 select ride_id
+	  from c202201 
+	  where member_casual = 'casual' and rideable_type = 'classic_bike'
+	 union all
+	 select ride_id
+	  from c202202 
+	  where member_casual = 'casual' and rideable_type = 'classic_bike'
+	 union all
+	 select ride_id
+	  from c202203 
+	  where member_casual = 'casual' and rideable_type = 'classic_bike'
+	 union all
+	 select ride_id
+	  from c202204 
+	  where member_casual = 'casual' and rideable_type = 'classic_bike'
+	 union all
+	 select ride_id
+	  from c202205 
+	  where member_casual = 'casual' and rideable_type = 'classic_bike'
+	 union all
+	 select ride_id
+	  from c202206 
+	  where member_casual = 'casual' and rideable_type = 'classic_bike'
+	 union all
+	 select ride_id 
+	  from c202207 
+	  where member_casual = 'casual' and rideable_type = 'classic_bike') as foo;*/
+	  
+-- DISTINCT START STATIONS ******************************************************************************
+
+/*select start_station_name, count(1) as qty 
+from c202108 where member_casual = 'member' group by start_station_name order by qty desc;*/
+
+-- DAY OF THE WEEK ******************************************************************************
+ -- 1 ----> MONDAY
+ -- 7 ----> SUNDAY
+ 
+/*with cte as (select extract(isodow from started_at) as num_day, count(1) as qty
+from (select started_at from c202108 union all
+	  select started_at from c202109 union all
+	  select started_at from c202110 union all
+	  select started_at from c202111 union all
+	  select started_at from c202112 union all
+	  select started_at from c202201 union all
+	  select started_at from c202202 union all
+	  select started_at from c202203 union all
+	  select started_at from c202204 union all
+	  select started_at from c202205 union all
+	  select started_at from c202206 union all
+	  select started_at from c202207) as fee
+group by num_day order by qty desc)
+
+select case when num_day = 1 then 'monday'
+			when num_day = 2 then 'tuesday'
+			when num_day = 3 then 'wednesday'
+			when num_day = 4 then 'thursday'
+			when num_day = 5 then 'friday'
+			when num_day = 6 then 'saturday'
+			else 'sunday' end as fai, qty
+from cte;*/
+
+-- MAX RIDE LENGTH ******************************************************************************************
+/*select ended_at - started_at as ride_length 
+from c202109 
+where member_casual = 'casual' 
+order by ride_length desc;*/
+
+
+/*select max(ended_at - started_at) as max_ride_length from 
+(select ended_at, started_at from c202108 where member_casual = 'member' union all
+	  select ended_at, started_at from c202109 where member_casual = 'member' union all
+	  select ended_at, started_at from c202110 where member_casual = 'member' union all
+	  select ended_at, started_at from c202111 where member_casual = 'member' union all
+	  select ended_at, started_at from c202112 where member_casual = 'member' union all
+	  select ended_at, started_at from c202201 where member_casual = 'member' union all
+	  select ended_at, started_at from c202202 where member_casual = 'member' union all
+	  select ended_at, started_at from c202203 where member_casual = 'member' union all
+	  select ended_at, started_at from c202204 where member_casual = 'member' union all
+	  select ended_at, started_at from c202205 where member_casual = 'member' union all
+	  select ended_at, started_at from c202206 where member_casual = 'member' union all
+	  select ended_at, started_at from c202207 where member_casual = 'member') as foo;*/
+	  
+	  
+-- AVERAGE RIDE LENGTH BY WEEKDAY *****************************************************************************
+
+/*with cte as (select extract(isodow from started_at) as num_day, avg(ended_at - started_at) as avg_ride_length
+from (select started_at, ended_at from c202108 union all
+	  select started_at, ended_at from c202109 union all
+	  select started_at, ended_at from c202110 union all
+	  select started_at, ended_at from c202111 union all
+	  select started_at, ended_at from c202112 union all
+	  select started_at, ended_at from c202201 union all
+	  select started_at, ended_at from c202202 union all
+	  select started_at, ended_at from c202203 union all
+	  select started_at, ended_at from c202204 union all
+	  select started_at, ended_at from c202205 union all
+	  select started_at, ended_at from c202206 union all
+	  select started_at, ended_at from c202207) as fee
+group by num_day)
+
+select case when num_day = 1 then 'monday'
+			when num_day = 2 then 'tuesday'
+			when num_day = 3 then 'wednesday'
+			when num_day = 4 then 'thursday'
+			when num_day = 5 then 'friday'
+			when num_day = 6 then 'saturday'
+			else 'sunday' end as fai, avg_ride_length
+from cte;*/
+
+-- AVG RIDE LENGTH BY WEEKDAY AND MEMBER_CASUAL *****************************************************************
+
+/*with cte as (select extract(isodow from started_at) as num_day, avg(ended_at - started_at) as avg_ride_length
+from (select started_at, ended_at from c202108 where member_casual = 'member' union all
+	  select started_at, ended_at from c202109 where member_casual = 'member' union all
+	  select started_at, ended_at from c202110 where member_casual = 'member' union all
+	  select started_at, ended_at from c202111 where member_casual = 'member' union all
+	  select started_at, ended_at from c202112 where member_casual = 'member' union all
+	  select started_at, ended_at from c202201 where member_casual = 'member' union all
+	  select started_at, ended_at from c202202 where member_casual = 'member' union all
+	  select started_at, ended_at from c202203 where member_casual = 'member' union all
+	  select started_at, ended_at from c202204 where member_casual = 'member' union all
+	  select started_at, ended_at from c202205 where member_casual = 'member' union all
+	  select started_at, ended_at from c202206 where member_casual = 'member' union all
+	  select started_at, ended_at from c202207 where member_casual = 'member') as fee
+group by num_day)
+
+select case when num_day = 1 then 'monday'
+			when num_day = 2 then 'tuesday'
+			when num_day = 3 then 'wednesday'
+			when num_day = 4 then 'thursday'
+			when num_day = 5 then 'friday'
+			when num_day = 6 then 'saturday'
+			else 'sunday' end as fai, avg_ride_length
+from cte;*/
+
+-- RIDES BY WEEKDAY PER MEMBERS OR CASUALS ****************************************************************
+
+/*with cte as (select extract(isodow from started_at) as num_day, count(1) as num_rides
+from (select * from c202108 where member_casual = 'member' union all
+	  select * from c202109 where member_casual = 'member' union all
+	  select * from c202110 where member_casual = 'member' union all
+	  select * from c202111 where member_casual = 'member' union all
+	  select * from c202112 where member_casual = 'member' union all
+	  select * from c202201 where member_casual = 'member' union all
+	  select * from c202202 where member_casual = 'member' union all
+	  select * from c202203 where member_casual = 'member' union all
+	  select * from c202204 where member_casual = 'member' union all
+	  select * from c202205 where member_casual = 'member' union all
+	  select * from c202206 where member_casual = 'member' union all
+	  select * from c202207 where member_casual = 'member') as fee
+group by num_day)
+
+select case when num_day = 1 then 'monday'
+			when num_day = 2 then 'tuesday'
+			when num_day = 3 then 'wednesday'
+			when num_day = 4 then 'thursday'
+			when num_day = 5 then 'friday'
+			when num_day = 6 then 'saturday'
+			else 'sunday' end as fai, num_rides
+from cte;*/
+
+
+-- CTEs *******************************************************************************************************
+
+/*with cte as (select ended_at, started_at from c202108 union all
+	  select ended_at, started_at from c202109 where member_casual = 'casual' union all
+	  select ended_at, started_at from c202110 where member_casual = 'casual' union all
+	  select ended_at, started_at from c202111 where member_casual = 'casual' union all
+	  select ended_at, started_at from c202112 where member_casual = 'casual' union all
+	  select ended_at, started_at from c202201 where member_casual = 'casual' union all
+	  select ended_at, started_at from c202202 where member_casual = 'casual' union all
+	  select ended_at, started_at from c202203 where member_casual = 'casual' union all
+	  select ended_at, started_at from c202204 where member_casual = 'casual' union all
+	  select ended_at, started_at from c202205 where member_casual = 'casual' union all
+	  select ended_at, started_at from c202206 where member_casual = 'casual' union all
+	  select ended_at, started_at from c202207 where member_casual = 'casual')
+	  
+with cte as (select ended_at, started_at from c202108 where member_casual = 'member' union all
+	  select ended_at, started_at from c202109 where member_casual = 'member' union all
+	  select ended_at, started_at from c202110 where member_casual = 'member' union all
+	  select ended_at, started_at from c202111 where member_casual = 'member' union all
+	  select ended_at, started_at from c202112 where member_casual = 'member' union all
+	  select ended_at, started_at from c202201 where member_casual = 'member' union all
+	  select ended_at, started_at from c202202 where member_casual = 'member' union all
+	  select ended_at, started_at from c202203 where member_casual = 'member' union all
+	  select ended_at, started_at from c202204 where member_casual = 'member' union all
+	  select ended_at, started_at from c202205 where member_casual = 'member' union all
+	  select ended_at, started_at from c202206 where member_casual = 'member' union all
+	  select ended_at, started_at from c202207 where member_casual = 'member')
+*/
